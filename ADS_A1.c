@@ -67,9 +67,9 @@ int main(int argc, char *argv[]){
     // Create a dataset structure for the header titles
     dataset_t titles;
 
-    // for (int i = 0; i < MAXCOLS; i++) {
-    //     titles.data[i] = NULL;
-    // }
+     for (int i = 0; i < MAXCOLS; i++) {
+         titles.data[i] = NULL;
+     }
 
     //store the first row of the csv files, from W2.6 Workshops
     store_header(data, &titles);
@@ -82,21 +82,26 @@ int main(int argc, char *argv[]){
 
     //store the addresses from the command line
 
-    char bin[MAXSTR_LEN];
+    //char bin[MAXSTR_LEN];
     char input_address[MAXSTR_LEN];
     
     //read through & ignore the first line of command line
-    fgets(bin, MAXSTR_LEN, stdin);
+    //fgets(bin, MAXSTR_LEN, stdin);
     int matches;
     while (fgets(input_address, MAXSTR_LEN, stdin)!=NULL) {
+
+        input_address[strcspn(input_address, "\n")] = '\0';
+         //testing   
+        if (strlen(input_address) == 0) {
+        continue;
+        }
+
         printf("%s", input_address);
-        fprintf(output, "%s\n", input_address);
-        listSearch(head, input_address, &matches, output, &titles);
-    }
+        fprintf(output, "%s", input_address);
+        listSearch(head, input_address, &matches, output, &titles);   
+        }
     
-    //print out the input ***DEBUGGING*****
-    printf("the input is:\n");
-    print_results(head);
+
 
 
     fclose(data);
@@ -166,20 +171,20 @@ store_dataset(FILE *data, node_ptr node){
 
 
 
-//print out the relevant lines of the dataset
-void
-print_results(node_ptr node){
+// //print out the relevant lines of the dataset
+// void
+// print_results(node_ptr node){
 
-    for (int i = 0; i < MAXCOLS; i++){
-        printf("%s|",node->loctn.data[i]);
-    }
-    printf("\n");
-    if(node->next != NULL){
-        print_results(node->next);
-    }
-}
+//     for (int i = 0; i < MAXCOLS; i++){
+//         printf("%s|",node->loctn.data[i]);
+//     }
+//     printf("\n");
+//     if(node->next != NULL){
+//         print_results(node->next);
+//     }
+// }
 
-//read the addresses in the command line
+
 
 //skips the header line in the input csv files
 void 
@@ -217,7 +222,7 @@ listSearch(node_ptr head, char *in_address, int *matches, FILE *output, dataset_
 	node_ptr curr_node = head;
 	
 	while (curr_node) {
-		if (strcmp(curr_node->loctn.data[2], in_address)) {
+		if (!strcmp(curr_node->loctn.data[1], in_address)) {
             (*matches)++; 
     		print_node(output, curr_node, titles);
             
@@ -225,6 +230,7 @@ listSearch(node_ptr head, char *in_address, int *matches, FILE *output, dataset_
 		}
 		curr_node = curr_node->next;
 	}
+    printf(" --> %d records found -\n",*matches);
 
 }
 
