@@ -71,7 +71,7 @@ int main(int argc, char *argv[]){
     store_dataset(data, head);
 
     //store the addresses from the command line
-    addnode_ptr first = init_addnode();
+    //addnode_ptr first = init_addnode();
 
     //print out the input ***DEBUGGING*****
     printf("the input is:\n");
@@ -111,7 +111,7 @@ store_dataset(FILE *data, node_ptr node){
                 node->loctn.data[counter][0] = '\0';
             } else {
                 // Start building the field with the first character
-                int pos = 1;
+                int pos = 0;
                 while(c != ',' && c != EOF) {
                     node->loctn.data[counter][pos] = c;
                     c = fgetc(data);
@@ -174,10 +174,4 @@ void
 skip_header(FILE *data){
     while (fgetc(data) != '\n');
 }
-
-int
-name_comp(node_ptr head, 
-
-
-)
 
