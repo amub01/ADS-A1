@@ -15,8 +15,6 @@ typedef struct {
     
 } dataset_t;
 
-//Hello this is a test
-
 //looks messy because a typedef doesn't work for a self-referencing struct,
 //              the struct layout is from W3 lecture slides.
 typedef struct node_t node_t;
@@ -25,7 +23,6 @@ struct node_t {
     dataset_t loctn;
     node_ptr   next;
     int      ncells;
-  
 };
 
 typedef struct {
@@ -47,7 +44,7 @@ struct addnode_t{
 // PROTOTYPES //
 void store_header(FILE *data, dataset_t *titles);
 node_ptr init_node();
-node_ptr store_dataset(FILE *data, node_ptr node);
+node_ptr store_dataset(FILE *data, node_ptr node, int *ncells);
 
 
 void listSearch(node_ptr head, char *in_address, int *matches, FILE *output, dataset_t *titles);
@@ -67,34 +64,28 @@ int main(int argc, char *argv[]){
     // Create a dataset structure for the header titles
     dataset_t titles;
 
-     for (int i = 0; i < MAXCOLS; i++) {
-         titles.data[i] = NULL;
-     }
-
     //store the first row of the csv files, from W2.6 Workshops
     store_header(data, &titles);
 
     //setup the first node in the linked list
     node_ptr head = init_node();
+    int ncells = 0;
 
     //store the data as a linked list
-    store_dataset(data, head);
+    store_dataset(data, head, &ncells);
 
-    //store the addresses from the command line
+    //need to use a temp variable for the recursive function
+     head->ncells = ncells;
 
-    //char bin[MAXSTR_LEN];
+
     char input_address[MAXSTR_LEN];
     
     //read through & ignore the first line of command line
-    //fgets(bin, MAXSTR_LEN, stdin);
     int matches;
     while (fgets(input_address, MAXSTR_LEN, stdin)!=NULL) {
 
         input_address[strcspn(input_address, "\n")] = '\0';
-         //testing   
-        if (strlen(input_address) == 0) {
-        continue;
-        }
+
 
         printf("%s", input_address);
         fprintf(output, "%s", input_address);
@@ -118,8 +109,9 @@ init_node(){
 
 //writes the input data into a linked list of arrays that can be indexed to find details
 node_ptr 
-store_dataset(FILE *data, node_ptr node){
+store_dataset(FILE *data, node_ptr node, int *ncells){
 
+    (*ncells)++;
     //storing each row from input as its own node
     for(int counter = 0; counter < MAXCOLS; counter++){
 
@@ -147,10 +139,10 @@ store_dataset(FILE *data, node_ptr node){
             char c = fgetc(data);
             int pos = 0;
             while(c != '\n' && c != EOF) {
-                node->loctn.data[counter][pos++] = c;
+                node->loctn.data[counter][pos] = c;
+                pos++;
                 c = fgetc(data);
             }
-            node->ncells++;
             node->loctn.data[counter][pos] = '\0';
         }
 
@@ -160,7 +152,7 @@ store_dataset(FILE *data, node_ptr node){
     if(nextchar != EOF){
         //put the character back so it can be stored
         ungetc(nextchar,data);
-        node->next = store_dataset(data, init_node());
+        node->next = store_dataset(data, init_node(), ncells);
     } else {
         //if EOF return NULL
         node->next = NULL;
@@ -168,21 +160,6 @@ store_dataset(FILE *data, node_ptr node){
 
     return node;
 }
-
-
-
-// //print out the relevant lines of the dataset
-// void
-// print_results(node_ptr node){
-
-//     for (int i = 0; i < MAXCOLS; i++){
-//         printf("%s|",node->loctn.data[i]);
-//     }
-//     printf("\n");
-//     if(node->next != NULL){
-//         print_results(node->next);
-//     }
-// }
 
 
 
@@ -230,7 +207,8 @@ listSearch(node_ptr head, char *in_address, int *matches, FILE *output, dataset_
 		}
 		curr_node = curr_node->next;
 	}
-    printf(" --> %d records found -\n",*matches);
+    printf(" --> %d records found -",*matches);
+    printf("comparisons: b... n%d s%d\n", head->ncells,head->ncells);
 
 }
 
