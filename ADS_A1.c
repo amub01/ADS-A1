@@ -73,7 +73,7 @@ int main(int argc, char *argv[]){
     store_dataset(data, head);
 
     //store the addresses from the command line
-    //addnode_ptr first = init_addnode();
+
 
     //print out the input ***DEBUGGING*****
     printf("the input is:\n");
