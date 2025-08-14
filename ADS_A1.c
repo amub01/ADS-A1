@@ -1,4 +1,12 @@
 
+// WHAT IS LEFT TO DO?????? //
+// - the b, n, and c comparison counting
+// - freeing all the memory
+// i think thats it :3 
+
+
+
+
 // INCLUDES //
 #include <stdio.h>
 #include <stdlib.h>
@@ -12,7 +20,7 @@
 // STRUCTS //
 typedef struct {
     char   *data[MAXCOLS];
-    
+    int     str_len[MAXCOLS];
 } dataset_t;
 
 //looks messy because a typedef doesn't work for a self-referencing struct,
@@ -46,10 +54,17 @@ void store_header(FILE *data, dataset_t *titles);
 node_ptr init_node();
 node_ptr store_dataset(FILE *data, node_ptr node, int *ncells);
 
+void readin_addresses(FILE *input, FILE *output, node_ptr node,
+             int *matches, dataset_t *titles, char* input_address);
 
-void listSearch(node_ptr head, char *in_address, int *matches, FILE *output, dataset_t *titles);
+void listSearch(node_ptr head, char *in_address, int *matches,
+                                 FILE *output, dataset_t *titles);
+
 void print_results(node_ptr node);
 void print_node(FILE *output, node_ptr node, dataset_t *titles);
+
+void free_nodes(node_ptr node);
+void free_header(dataset_t *title);
 
 int main(int argc, char *argv[]){
     // Make sure that there is at least an input & output file
@@ -69,32 +84,24 @@ int main(int argc, char *argv[]){
 
     //setup the first node in the linked list
     node_ptr head = init_node();
-    int ncells = 0;
+
 
     //store the data as a linked list
+    int ncells = 0;
     store_dataset(data, head, &ncells);
-
     //need to use a temp variable for the recursive function
      head->ncells = ncells;
 
 
     char input_address[MAXSTR_LEN];
-    
-    //read through & ignore the first line of command line
     int matches;
-    while (fgets(input_address, MAXSTR_LEN, stdin)!=NULL) {
-
-        input_address[strcspn(input_address, "\n")] = '\0';
-
-
-        printf("%s", input_address);
-        fprintf(output, "%s", input_address);
-        listSearch(head, input_address, &matches, output, &titles);   
-        }
+    readin_addresses(data, output, head, &matches,
+                             &titles, input_address);
     
 
-
-
+    //free & close stuff
+    free_nodes(head);
+    free_header(&titles);
     fclose(data);
     fclose(output);
     return 0;
@@ -107,7 +114,7 @@ init_node(){
     
 }
 
-//writes the input data into a linked list of arrays that can be indexed to find details
+//writes the input data into a linked list of arrays 
 node_ptr 
 store_dataset(FILE *data, node_ptr node, int *ncells){
 
@@ -133,6 +140,13 @@ store_dataset(FILE *data, node_ptr node, int *ncells){
                 }
                 // Null terminate the string
                 node->loctn.data[counter][pos] = '\0';
+                //realloc to trim node size
+                node->loctn.str_len[counter] = strlen(node->loctn.data[counter]);
+                char *trimmed = realloc(node->loctn.data[counter], (pos + 1) * sizeof(char));
+                if (trimmed != NULL) {
+                    node->loctn.data[counter] = trimmed;
+                }
+
             }
         } else {
             // for last column read until end of line
@@ -161,8 +175,6 @@ store_dataset(FILE *data, node_ptr node, int *ncells){
     return node;
 }
 
-
-
 //skips the header line in the input csv files
 void 
 store_header(FILE *data, dataset_t *titles) {
@@ -181,6 +193,12 @@ store_header(FILE *data, dataset_t *titles) {
 
         titles->data[counter][pos] = '\0';
 
+        //reused from store_dataset :P
+        char *trimmed = realloc(titles->data[counter], (pos + 1) * sizeof(char));
+        if (trimmed != NULL) {
+            titles->data[counter] = trimmed;
+        }
+
         if (c == '\n' || c == EOF) {
             break;
         }
@@ -189,10 +207,23 @@ store_header(FILE *data, dataset_t *titles) {
     return;
 }
 
-
-
 void 
-listSearch(node_ptr head, char *in_address, int *matches, FILE *output, dataset_t *titles) {
+readin_addresses(FILE *input, FILE *output, node_ptr node, int *matches, 
+                                    dataset_t *titles, char input_address[]){
+        while (fgets(input_address, MAXSTR_LEN, stdin)!=NULL) {
+
+        input_address[strcspn(input_address, "\n")] = '\0';
+
+        printf("%s", input_address);
+        fprintf(output, "%s", input_address);
+
+        listSearch(node, input_address, matches, output, titles);   
+    }
+}
+//lookup of inputted EZY_ADD
+void 
+listSearch(node_ptr head, char *in_address, int *matches, 
+                                            FILE *output, dataset_t *titles) {
 	// Reset the comparison counter to 0
 	*matches = 0;
 	
@@ -203,15 +234,17 @@ listSearch(node_ptr head, char *in_address, int *matches, FILE *output, dataset_
             (*matches)++; 
     		print_node(output, curr_node, titles);
             
-    		break;
+    		//break;
 		}
 		curr_node = curr_node->next;
 	}
+    ////  NEED TO FIND A PROPER FIX FOR THIS ////
     printf(" --> %d records found -",*matches);
     printf("comparisons: b... n%d s%d\n", head->ncells,head->ncells);
 
 }
 
+//prints each cell of the node into the output file
 void 
 print_node(FILE *output, node_ptr node, dataset_t *titles) {
     fprintf(output,"\n--> ");
@@ -224,5 +257,24 @@ print_node(FILE *output, node_ptr node, dataset_t *titles) {
     fprintf(output,"\n");
 }
 
+//frees the nodes of the linked list
+void
+free_nodes(node_ptr node){
 
+        if(node->next == NULL){
+            for (int i = 0;i < MAXCOLS; i++){
+                free(node->loctn.data[i]);
+            }
+            free(node);
+        } else {
+            free_nodes(node->next);
+        }
 
+}
+
+void 
+free_header(dataset_t *titles){
+    for (int i = 0; i < MAXCOLS; i++){
+        free(titles->data[i]);
+    }
+}
