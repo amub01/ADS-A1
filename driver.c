@@ -4,6 +4,8 @@
 // - freeing all the memory
 // i think thats it :3
 
+// Run command: ./ass1 1 dataset_22.csv output.txt <  test22.in
+
 // INCLUDES //
 #include <assert.h>  // Only for assert, not in the chain
 #include "in-out.h"  // This chains to data.h, bringing in all definitions
